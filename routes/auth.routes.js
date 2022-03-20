@@ -6,6 +6,7 @@ const saltRounds = 10;
 const User = require("../models/User.model");
 const isLoggedOut = require("../middleware/isLoggedOut");
 const isLoggedIn = require("../middleware/isLoggedIn");
+const regex = require("../helpers/regex");
 
 router.get("/loggedin", (req, res) => {
   res.json(req.user);
@@ -14,32 +15,29 @@ router.get("/loggedin", (req, res) => {
 router.post("/signup", isLoggedOut, async (req, res) => {
 
   try {
-    // Get user input
+
     const { firstName, lastName, email, password } = req.body;
 
-    // Validate user input
-    if (!(email && password && firstName && lastName)) {
-      res.status(400).send("All input is required");
-    }
+    if (!(email && password && firstName && lastName)) throw new Error("All input is required", { statusCode: 400 });
 
-    // check if user already exist
-    // Validate if user exist in our database
+    if(!regex.validateEmail(email))  throw new Error("Email is not valid", { statusCode: 409 });
+
     const oldUser = await User.findOne({ email });
 
-    if (oldUser) return res.status(409).send("User Already Exist. Please Login");
+    if (oldUser) throw new Error("User Already Exist. Please Login", { statusCode: 409 });
 
-    //Encrypt user password
+    if(!regex.validatePassword(password))  throw new Error("Invalid password", { statusCode: 409 });
+
     encryptedPassword = await bcrypt.hash(password, 10);
 
-    // Create user in our database
     const user = await User.create({
       firstName,
       lastName,
-      email: email.toLowerCase(), // sanitize: convert email to lowercase
-      password: encryptedPassword,
+      email: email.toLowerCase(),
+      password: encryptedPassword
     });
 
-    // Create token
+
     const token = jwt.sign(
       { user_id: user._id, email },
       process.env.TOKEN_KEY,
@@ -47,25 +45,19 @@ router.post("/signup", isLoggedOut, async (req, res) => {
         expiresIn: "2h",
       }
     );
-    // save user token
+
     user.token = token;
 
-    res.status(201).json(user);
+    return res.status(201).json(user);
 
   }catch (error) {
 
     console.log(error);
-    /*if (error instanceof mongoose.Error.ValidationError) {
-      return res.status(400).json({ errorMessage: error.message });
-    }
-    if (error.code === 11000) {
-      return res.status(400).json({
-        errorMessage:
-          "Username need to be unique. The username you chose is already in use.",
-      });
-    }
+    if (error instanceof mongoose.Error.ValidationError) return res.status(400).json({ errorMessage: error.message });
+
+    if (error.code === 11000) return res.status(400).json({errorMessage:"Username need to be unique. The username you chose is already in use."});
     
-    return res.status(error.statusCode || 400 ).json({ errorMessage: error.message || error });*/
+    return res.status(error.statusCode || 400 ).json({ errorMessage: error.message || error });
 
   }
 
@@ -78,7 +70,7 @@ router.post("/signin", isLoggedOut, async (req, res, next) => {
     const { email, password } = req.body;
 
     // Validate user input
-    if (!(email && password)) return res.status(400).send("All input is required");
+    if (!(email && password)) throw new Error("All input is required", { statusCode: 400 });
     // Validate if user exist in our database
     const user = await User.findOne({ email });
 
@@ -98,9 +90,10 @@ router.post("/signin", isLoggedOut, async (req, res, next) => {
 
       res.status(200).json(user);
     }
-    res.status(400).send("Invalid Credentials");
-  } catch (err) {
-    console.log(err);
+    throw new Error("Invalid Credentials", { statusCode: 400 });
+
+  } catch (error) {
+    return res.status(error.statusCode || 400 ).json({ errorMessage: error.message || error });
   }
 
 });

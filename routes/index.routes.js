@@ -8,7 +8,7 @@ router.get("/", (req, res, next) => {
 });
 
 router.get("/welcome",auth, (req, res, next) => {
-  res.json("Welcome 👋");
+  res.json({message: "Welcome 👋"});
 });
 
 router.use("/auth", authRoutes);
