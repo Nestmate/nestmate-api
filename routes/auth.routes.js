@@ -17,29 +17,28 @@ router.post("/signup", isLoggedOut, async (req, res) => {
   try {
 
     const { firstName, lastName, email, password } = req.body;
-
+    
     if (!(email && password && firstName && lastName)) throw new Error("All input is required", { statusCode: 400 });
+    const lowerCaseEmail = email.toLowerCase();
+    if(!regex.validateEmail(lowerCaseEmail))  throw new Error("Email is not valid", { statusCode: 409 });
 
-    if(!regex.validateEmail(email))  throw new Error("Email is not valid", { statusCode: 409 });
+    const oldUser = await User.exists({ email: lowerCaseEmail });
 
-    const oldUser = await User.findOne({ email });
-
-    if (oldUser) throw new Error("User Already Exist. Please Login", { statusCode: 409 });
+    if (oldUser) return res.status(400).json({ error: 'user_exists', message: 'User exists' });
 
     if(!regex.validatePassword(password))  throw new Error("Invalid password", { statusCode: 409 });
 
-    encryptedPassword = await bcrypt.hash(password, 10);
+    encryptedPassword = await bcrypt.hash(password, saltRounds);
 
     const user = await User.create({
       firstName,
       lastName,
-      email: email.toLowerCase(),
+      email: lowerCaseEmail,
       password: encryptedPassword
     });
 
-
-    const token = jwt.sign(
-      { user_id: user._id, email },
+    const token = await jwt.sign(
+      { user_id: user._id, lowerCaseEmail },
       process.env.TOKEN_KEY,
       {
         expiresIn: "2h",
@@ -47,6 +46,8 @@ router.post("/signup", isLoggedOut, async (req, res) => {
     );
 
     user.token = token;
+
+    //send refresh token;
 
     return res.status(201).json(user);
 
