@@ -1,111 +1,62 @@
-const router = require("express").Router();
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
-const mongoose = require("mongoose");
-const saltRounds = 10;
-const User = require("../models/User.model");
-const isLoggedOut = require("../middleware/isLoggedOut");
-const isLoggedIn = require("../middleware/isLoggedIn");
-const regex = require("../helpers/regex");
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const User = require('../models/User.model');
+const router = express.Router();
+const jwt = require('jsonwebtoken');
+const {isAuthenticated} = require('../middleware/jwt.middleware');
 
-router.get("/loggedin", (req, res) => {
-  res.json(req.user);
-});
+router.post('/signup', async (req, res) => {
+    try {
+        const { username, firstName, lastName , birthDate, loc ,email, password } = req.body;
 
-router.post("/signup", isLoggedOut, async (req, res) => {
+        if (!username || !email || !password) return res.status(400).json({ message: "missing fields" });
 
-  try {
+        const user = await User.findOne({ email });
 
-    const { firstName, lastName, email, password } = req.body;
-    
-    if (!(email && password && firstName && lastName)) throw new Error("All input is required", { statusCode: 400 });
-    const lowerCaseEmail = email.toLowerCase();
-    if(!regex.validateEmail(lowerCaseEmail))  throw new Error("Email is not valid", { statusCode: 409 });
+        if (user) return res.status(400).json({ message: "user already exists" });
+        
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(password, salt);
+        const newUser = await User.create({ username, email, firstName, birthDate, loc, lastName, password: hash });
+        
+        res.status(200).json({email: newUser.email, username: newUser.username});
 
-    const oldUser = await User.exists({ email: lowerCaseEmail });
+    } catch (err) {
 
-    if (oldUser) return res.status(400).json({ error: 'user_exists', message: 'User exists' });
-
-    if(!regex.validatePassword(password))  throw new Error("Invalid password", { statusCode: 409 });
-
-    encryptedPassword = await bcrypt.hash(password, saltRounds);
-
-    const user = await User.create({
-      firstName,
-      lastName,
-      email: lowerCaseEmail,
-      password: encryptedPassword
-    });
-
-    const token = await jwt.sign(
-      { user_id: user._id, lowerCaseEmail },
-      process.env.TOKEN_KEY,
-      {
-        expiresIn: "2h",
-      }
-    );
-
-    user.token = token;
-
-    //send refresh token;
-
-    return res.status(201).json(user);
-
-  }catch (error) {
-
-    console.log(error);
-    if (error instanceof mongoose.Error.ValidationError) return res.status(400).json({ errorMessage: error.message });
-
-    if (error.code === 11000) return res.status(400).json({errorMessage:"Username need to be unique. The username you chose is already in use."});
-    
-    return res.status(error.statusCode || 400 ).json({ errorMessage: error.message || error });
-
-  }
-
-});
-
-router.post("/signin", isLoggedOut, async (req, res, next) => {
-  // Our login logic starts here
-  try {
-    // Get user input
-    const { email, password } = req.body;
-
-    // Validate user input
-    if (!(email && password)) throw new Error("All input is required", { statusCode: 400 });
-    // Validate if user exist in our database
-    const user = await User.findOne({ email });
-
-    if (user && (await bcrypt.compare(password, user.password))) {
-      // Create token
-      const token = jwt.sign(
-        { user_id: user._id, email },
-        process.env.TOKEN_KEY,
-        {
-          expiresIn: "2h",
-        }
-      );
-      
-      console.log(token);
-      // save user token
-      user.token = token;
-
-      res.status(200).json(user);
+        res.status(500).json({ message: err });
+        
     }
-    throw new Error("Invalid Credentials", { statusCode: 400 });
-
-  } catch (error) {
-    return res.status(error.statusCode || 400 ).json({ errorMessage: error.message || error });
-  }
-
 });
 
-router.get("/logout", isLoggedIn, (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({ errorMessage: err.message });
+router.post('/signin', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) return res.status(400).json({ message: "missing fields" });
+
+        const user = await User.findOne({ email });
+
+        if (!user) return res.status(400).json({ message: "Invalid login" });
+
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) return res.status(400).json({ message: "incorrect password" });
+
+        delete user.password;
+        
+        const authToken = jwt.sign({ user }, process.env.TOKEN_SECRET, { algorithm: 'HS256',expiresIn: '6h' });
+
+        res.status(200).json({authToken});
+
+
+    } catch (err) {
+
+        res.status(500).json({ message: err });
     }
-    res.json({ message: "Done" });
-  });
+});
+
+router.get('/verify', isAuthenticated, (req, res) => {
+    res.status(200).json(req.payload);
 });
 
 module.exports = router;
