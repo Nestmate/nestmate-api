@@ -1,5 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const genUsername = require("unique-username-generator");
 const User = require('../models/User.model');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
@@ -7,9 +8,11 @@ const {isAuthenticated} = require('../middleware/jwt.middleware');
 
 router.post('/signup', async (req, res) => {
     try {
-        const { username, firstName, lastName , birthDate, loc ,email, password } = req.body;
+        const { firstName, lastName , birthDate, loc ,email, password } = req.body;
 
-        if (!username || !email || !password) return res.status(400).json({ message: "missing fields" });
+        if (!email || !password) return res.status(400).json({ message: "missing fields" });
+
+        const username = await genUsername.generateFromEmail(email,3);
 
         const user = await User.findOne({ email });
 
@@ -18,13 +21,14 @@ router.post('/signup', async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hash = await bcrypt.hash(password, salt);
         const newUser = await User.create({ username, email, firstName, birthDate, loc, lastName, password: hash });
-        
-        res.status(200).json({email: newUser.email, username: newUser.username});
+        delete newUser.password;
+        const authToken = jwt.sign({ user }, process.env.TOKEN_SECRET, { algorithm: 'HS256',expiresIn: '6h' });
+
+        res.status(200).json({authToken});
 
     } catch (err) {
-
-        res.status(500).json({ message: err });
-        
+        console.log(err);
+        res.status(400).json({ message: err });
     }
 });
 

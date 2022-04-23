@@ -21,6 +21,7 @@ const userSchema = new Schema(
     description: String,
     profilePicture: String,
     images: [String],
+    favourites: [{ type: Schema.Types.ObjectId, ref: "Favourite" }],
     connections: [{ type: Schema.Types.ObjectId, ref: "Connection" }],
     ratings: [{ type: Schema.Types.ObjectId, ref: "Rating" }],
     interests: [{ type: Schema.Types.ObjectId, ref: "Interest" }],
