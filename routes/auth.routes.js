@@ -8,7 +8,7 @@ const {isAuthenticated} = require('../middleware/jwt.middleware');
 
 router.post('/signup', async (req, res) => {
     try {
-        const { firstName, lastName , birthDate, loc ,email, password } = req.body;
+        const { email, password } = req.body;
 
         if (!email || !password) return res.status(400).json({ message: "missing fields" });
 
@@ -20,9 +20,9 @@ router.post('/signup', async (req, res) => {
         
         const salt = await bcrypt.genSalt(10);
         const hash = await bcrypt.hash(password, salt);
-        const newUser = await User.create({ username, email, firstName, birthDate, loc, lastName, password: hash });
+        const newUser = await User.create({ username, email, password: hash });
         delete newUser.password;
-        const authToken = jwt.sign({ user }, process.env.TOKEN_SECRET, { algorithm: 'HS256',expiresIn: '6h' });
+        const authToken = jwt.sign({ user }, process.env.TOKEN_SECRET, { algorithm: 'HS256',expiresIn: '30d' });
 
         res.status(200).json({authToken});
 
@@ -48,7 +48,7 @@ router.post('/signin', async (req, res) => {
 
         delete user.password;
         
-        const authToken = jwt.sign({ user }, process.env.TOKEN_SECRET, { algorithm: 'HS256',expiresIn: '6h' });
+        const authToken = jwt.sign({ user }, process.env.TOKEN_SECRET, { algorithm: 'HS256',expiresIn: '30d' });
 
         res.status(200).json({authToken});
 
@@ -56,6 +56,29 @@ router.post('/signin', async (req, res) => {
     } catch (err) {
 
         res.status(500).json({ message: err });
+    }
+});
+
+router.put('/onboard', async (req, res) => {
+    try {
+        const { _id, firstName, lastName, birthDate, description, profilePicture, images, loc, budgetRange, moveDateRange } = req.body;
+
+        console.log(_id, firstName, lastName, birthDate, description, profilePicture, images, loc, budgetRange, moveDateRange);
+
+        if (!firstName || !lastName || !birthDate || !description || !profilePicture || !images || !loc || !budgetRange || !moveDateRange) return res.status(400).json({ message: "missing fields" });
+
+        const user = await User.findOneAndUpdate(
+            {_id},
+            { firstName, lastName, birthDate, description, profilePicture, images, loc, budgetRange, moveDateRange, isOnboarded: true }, 
+            {new: true });
+        
+        const authToken = jwt.sign({ user }, process.env.TOKEN_SECRET, { algorithm: 'HS256',expiresIn: '30d' });
+
+        res.status(200).json({authToken});
+
+    } catch (err) {
+        console.log(err);
+        res.status(400).json({ message: err });
     }
 });
 

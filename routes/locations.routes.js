@@ -4,7 +4,7 @@ const axios = require('axios');
 const placesKey = process.env.PLACES_KEY;
 const placesAutoURl = process.env.PLACES_AUTO_URL;
 const placesURl = process.env.PLACES_URL;
-const searchUrl = (query) => `${placesAutoURl}&input=${query}&types=geocode&language=en&key=${placesKey}`;
+const searchUrl = (query) => `${placesAutoURl}fields=geometry%2Cformatted_address&input=${query}&inputtype=textquery&key=${placesKey}`;
 const detailUrl = (id) => `${placesURl}reference=${id}&sensor=true&language=en&key=${placesKey}`;
 
 router.get('/', async (req, res) => {

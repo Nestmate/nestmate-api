@@ -19,15 +19,14 @@ const userSchema = new Schema(
     password: { type: String, required: true },
     birthDate: Date,
     description: String,
-    profilePicture: String,
-    images: [String],
+    profilePicture: Object,
+    images: [Object],
     favourites: [{ type: Schema.Types.ObjectId, ref: "Favourite" }],
     connections: [{ type: Schema.Types.ObjectId, ref: "Connection" }],
     ratings: [{ type: Schema.Types.ObjectId, ref: "Rating" }],
     interests: [{ type: Schema.Types.ObjectId, ref: "Interest" }],
     loc: {
       type: PointSchema,
-      required: true,
       index: '2dsphere'
     },
     budgetRange: {
@@ -40,6 +39,7 @@ const userSchema = new Schema(
     },
     languages: [String],
     country: String,
+    isOnboarded: { type: Boolean, default: false },
     isVerified: { type: Boolean, default: false },
   },
   {

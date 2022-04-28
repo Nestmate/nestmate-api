@@ -8,6 +8,7 @@ const favouriteSchema = new Schema({
     timestamps: true 
 });
 
+
 module.exports = model('Favourite', favouriteSchema);
 
 // Label
