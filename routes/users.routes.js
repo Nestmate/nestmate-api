@@ -1,21 +1,37 @@
 const router = require("express").Router();
-const { isAuthenticated } = require("../middleware/jwt.middleware");
-const Favourite = require("../models/Favourite.model");
 const User = require("../models/User.model");
+const isAuthUser = require("../helpers/isAuthUser");
 
-router.get("/:username", async (req, res) => {
+router.get("/:username" , async (req, res) => {
   try {
+
+    let authUser = await isAuthUser(req);
+    console.log('authUser _id => ', authUser?._id);
+
     const { username } = req.params;
     
-    const user = await User.findOne({ username },{ password: 0 });
+    const user = await User.findOne({ username },{ password: 0 }).populate('interests');
 
     if (!user) return res.status(404).json({ msg: "User not found" });
+    
+    const favourites = authUser?._id ? await User.findOne({ _id: authUser?._id, favourites: user?._id }) : false;
 
-    res.status(200).json(user);
+    console.log('Has Favourites = >', favourites);
+    
+    let isFavourited = !favourites ? false : true;
+
+    const updatedUser = { ...user._doc, isFavourited }
+
+    res.status(200).json(updatedUser);
+
   } catch (err) {
-    res.status(500).json({ message: err.message });
+
+    res.status(500).json({ message: err });
+    
   }
 });
+
+
 
 router.post("/location/:lng/:lat/:distance",  async (req, res) => {
   try {

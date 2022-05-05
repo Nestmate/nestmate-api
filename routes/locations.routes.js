@@ -4,7 +4,8 @@ const axios = require('axios');
 const placesKey = process.env.PLACES_KEY;
 const placesAutoURl = process.env.PLACES_AUTO_URL;
 const placesURl = process.env.PLACES_URL;
-const searchUrl = (query) => `${placesAutoURl}fields=geometry%2Cformatted_address&input=${query}&inputtype=textquery&key=${placesKey}`;
+const searchUrl = (query) => `${placesAutoURl}&query=${query}`;
+// const searchUrl = (query) => `${placesAutoURl}fields=geometry%2Cformatted_address&input=${query}&inputtype=textquery&key=${placesKey}`;
 const detailUrl = (id) => `${placesURl}reference=${id}&sensor=true&language=en&key=${placesKey}`;
 
 router.get('/', async (req, res) => {
@@ -45,7 +46,7 @@ router.get('/search/:query', async (req, res) => {
         if(!query?.length) return res.status(400).json({ message: "no results" });
 
         console.log('QUERY', query);
-        const { data } = await axios.get(searchUrl(query));
+        const { data } = await axios.get(searchUrl(query),{headers:{Authorization: `${placesKey}`}});
 
         if (data.length === 0) return res.status(400).json({ message: "no results" });
 

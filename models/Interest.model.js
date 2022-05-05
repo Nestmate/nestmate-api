@@ -5,16 +5,10 @@ const interestSchema = new Schema({
         type: String,
         required: true
     },
-    description: {
-        type: String,
-        required: true  
-    },
     emoji: {
         type: String,
-        required: true,
         default: '💡'
-    },
-    category: { type: Schema.Types.ObjectId, ref: "Category" }
+    }
 });
 
 module.exports = model('Interest', interestSchema);

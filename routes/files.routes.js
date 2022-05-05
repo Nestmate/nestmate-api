@@ -4,6 +4,7 @@ const fileUpload = require('../config/cloudinary');
 
 router.post('/upload', fileUpload.single("file"), async (req,res) => {
     try{
+        console.log(req.file);
         res.status(200).json({file: req.file});
 
     }catch(err){

@@ -10,5 +10,7 @@ router.use("/locations", require("./locations.routes"));
 router.use("/mates", require("./mates.routes"));
 router.use("/files", require("./files.routes"));
 router.use("/favourites", require("./favourites.routes"));
+router.use("/interests", require("./interests.routes"));
+router.use("/settings", require("./settings.routes"));
 
 module.exports = router;

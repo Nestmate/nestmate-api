@@ -11,7 +11,7 @@ router.get("/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const mates = await Mate.find({ user:userId },{ password: 0 }).populate('mate');
+    const mates = await User.findOne({ _id:userId },'connections').populate('connections interests',{ password: 0 });
 
     res.status(200).json(mates);
 
@@ -42,17 +42,9 @@ router.post("/:userId", async (req, res) => {
             return match;
         });
 
-        console.log(matches);
-        const mappedMatches = matches.map(match => {
-            return {
-                user: _id,
-                mate: match._id,
-                precentage: 0,
-                interests: []  
-            }
-        });
+        const mappedMatches = matches.map(match => match._id);
 
-        const mates = await Mate.insertMany(mappedMatches);
+        const mates = await User.findOneAndUpdate({_id},{connections: mappedMatches}, {upsert: true}, 'connections');
 
         res.status(200).json(mates);
 

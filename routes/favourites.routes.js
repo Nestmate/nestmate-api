@@ -2,6 +2,7 @@ const router = require("express").Router();
 const Mate = require("../models/Mate.model");
 const Favourite = require("../models/Favourite.model");
 const User = require("../models/User.model");
+const isAuthUser = require("../helpers/isAuthUser");
 
 router.get("/:userId", async (req, res) => {
     try{
@@ -9,7 +10,9 @@ router.get("/:userId", async (req, res) => {
 
         if(!userId) return res.status(400).json({ message: "User is required" });
 
-        const favourites = await Favourite.find({ user: userId }).populate('mate',{ password: 0 });
+        const {favourites} = await User.findOne({ _id: userId },'favourites').populate('favourites',{ password: 0 });
+
+        console.log(favourites);
 
         res.status(200).json(favourites);
 
@@ -22,20 +25,18 @@ router.get("/:userId", async (req, res) => {
 router.post("/:mateId", async (req, res) => {
     try {
         const { mateId } = req.params;
-        const { user } = req.body;
-        console.log(user);
+        const authUser = await isAuthUser(req);
+
+        if(authUser.length === 0) return res.status(400).json({ message: "User is required" });
         
-        let favourite = await Favourite.findOne({user:user._id, mate:mateId });
+        let favourite = await User.exists({_id:authUser._id, favourites: mateId });
         
         if(favourite){
-            await Favourite.deleteOne({ _id:favourite });
-            await User.updateOne({ _id:user._id },{ $pull: { favourites: favourite._id } });
+            await User.updateOne({ _id:authUser._id },{ $pull: { favourites: mateId } });
             return res.status(200).json({ message: false });
         }
 
-        favourite = await Favourite.create({ user:user._id, mate:mateId })
-        console.log(favourite);
-        await User.updateOne({ _id:user._id },{ $push: { favourites: favourite._id } });
+        await User.updateOne({ _id:authUser._id },{ $push: { favourites: mateId } });
         return res.status(200).json({ message: true });
 
     } catch (err) {

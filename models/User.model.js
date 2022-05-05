@@ -20,9 +20,10 @@ const userSchema = new Schema(
     birthDate: Date,
     description: String,
     profilePicture: Object,
+    pronouns: { type: String, enum: ['he/him', 'she/her', 'they,them', 'other'] },
     images: [Object],
-    favourites: [{ type: Schema.Types.ObjectId, ref: "Favourite" }],
-    connections: [{ type: Schema.Types.ObjectId, ref: "Connection" }],
+    favourites: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    connections: [{ type: Schema.Types.ObjectId, ref: "User" }],
     ratings: [{ type: Schema.Types.ObjectId, ref: "Rating" }],
     interests: [{ type: Schema.Types.ObjectId, ref: "Interest" }],
     loc: {
