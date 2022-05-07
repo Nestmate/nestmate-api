@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const isAuthUser = require("../helpers/isAuthUser");
 const User = require("../models/User.model");
+const jwt = require('jsonwebtoken');
 
 const getSettingsType = (type) => {
 
@@ -10,9 +11,12 @@ const getSettingsType = (type) => {
         
         case 'pictures':
             return 'profilePicture images';
-        
+
         case 'move':
             return 'moveDateRange budgetRange loc';
+        
+        case 'complete':
+            return 'isOnboarded';
 
         default:
             return  'firstName lastName birthDate pronouns';
@@ -33,6 +37,14 @@ const getSettingsBody = (type, body) => {
                 description: body.description
             }
             break;
+
+        case 'move':
+            data = {
+                moveDateRange: body.moveDateRange,
+                budgetRange: body.budgetRange,
+                loc: body.loc
+            }
+            break;
         
         case 'pictures':
             data = {
@@ -40,12 +52,10 @@ const getSettingsBody = (type, body) => {
                 profilePicture: body.profilePicture
             }
             break;
-            
-        case 'move':
+        
+        case 'complete':
             data = {
-                moveDateRange: body.moveDateRange,
-                budgetRange: body.budgetRange,
-                loc: body.loc
+                isOnboarded: body.isOnboarded
             }
             break;
 
@@ -62,7 +72,7 @@ const getSettingsBody = (type, body) => {
     return data;
 }
 
-//PERSONAL
+
 router.get("/:id/:type" , async (req, res) => {
     try {
 
@@ -77,6 +87,7 @@ router.get("/:id/:type" , async (req, res) => {
 
         if (!user) return res.status(404).json({ msg: "User not found" });
 
+        
         res.status(200).json(user);
 
     } catch (err) {
@@ -104,7 +115,14 @@ router.post("/:id/:type" , async (req, res) => {
 
         if( authUser?._id !== id ) return res.status(401).json({ message: "Unauthorized" });
         
-        await User.findOneAndUpdate({_id:id },updateData,{ new: true });
+        const user = await User.findOneAndUpdate({_id:id },updateData,{ new: true });
+
+        if(type === 'complete') {
+
+            const authToken = await jwt.sign({ user }, process.env.TOKEN_SECRET, { algorithm: 'HS256',expiresIn: '30d' });
+
+            return res.status(200).json({ authToken });
+        }
 
         res.status(200).json({ message: "Your personal settings have been update." });
 

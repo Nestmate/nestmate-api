@@ -38,17 +38,19 @@ router.post("/:userId", async (req, res) => {
 
         const matches = users.filter(user => {
             const userInterests = user.interests;
-            const match = interests.filter(interest => userInterests.includes(interest));
-            return match;
+            return interests.filter(interest => userInterests.includes(interest));
         });
+
+        console.log(matches);
 
         const mappedMatches = matches.map(match => match._id);
 
-        const mates = await User.findOneAndUpdate({_id},{connections: mappedMatches}, {upsert: true}, 'connections');
+        const {connections} = await User.findOneAndUpdate({_id},{ connections: mappedMatches }, {upsert: true}).populate('connections',{ password: 0 });
 
-        res.status(200).json(mates);
+        res.status(200).json(connections);
 
     } catch (err) {
+        console.error(err);
         res.status(500).json({ message: err.message });
     }
 });

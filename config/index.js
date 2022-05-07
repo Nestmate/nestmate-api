@@ -14,13 +14,6 @@ module.exports = (app) => {
 
   app.use(cors());
 
-  // app.use(
-  //   cors({
-  //     credentials: true,
-  //     origin: process.env.ORIGIN || "http://localhost:3000",
-  //   })
-  // );
-
   app.use(logger("dev"));
   app.use(favicon('./public/images/favicon.ico'));
   app.use(express.json({ limit: '50mb' }));
