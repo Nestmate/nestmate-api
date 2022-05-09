@@ -1,4 +1,4 @@
-module.exports = () => {
+module.exports = (io) => {
   const router = require("express").Router();
 
   router.get("/", (req, res, next) => {
@@ -14,7 +14,7 @@ module.exports = () => {
   router.use("/interests", require("./interests.routes"));
   router.use("/settings", require("./settings.routes"));
   router.use("/onboarding", require("./onboarding.routes"));
-  router.use("/chats", require("./chat.routes")());
+  router.use("/chats", require("./chat.routes")(io));
 
   return router;
 

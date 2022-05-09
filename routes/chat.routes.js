@@ -1,4 +1,4 @@
-module.exports = (io = null) => {
+module.exports = (io) => {
 
     const router = require("express").Router();
     const Chat = require('../models/Chat.model');
@@ -70,11 +70,11 @@ module.exports = (io = null) => {
             const { chat } = req.params;
             const { message, user } = req.body;
             const newMessage = await Message.create({ message, chat, user });
-            
+           
             await Chat.findByIdAndUpdate({ _id:chat }, { lastMessage: newMessage._id , $push: { messages: newMessage._id } }, { new: true });
-            //io.to(chat).emit('message', newMessage);
-            //io.emit("message", newMessage);
-            //io.emit('message', newMessage);
+
+            await newMessage.populate('user');
+            io.to(chat).emit('message', newMessage);
 
             res.status(200).json({ newMessage });
 

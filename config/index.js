@@ -40,4 +40,7 @@ module.exports = (app) => {
     req.user = req.session.user || null;
     next();
   });
+
+  
+
 };
