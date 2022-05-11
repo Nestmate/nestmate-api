@@ -5,7 +5,7 @@ const interestsList = [{"name":"3D printing","emoji":"🖨"},{"name":"Amateur ra
 
 router.get('/', async (req, res) => {
     try {
-        const interests = await Interest.find({},{'_id':0,"__v":0});
+        const interests = await Interest.find();
 
         res.status(200).json(interests);
 
@@ -17,18 +17,18 @@ router.get('/', async (req, res) => {
 });
 
 
-router.get('/batch', async (req, res) => {
+// router.get('/batch', async (req, res) => {
 
-    try{
-        // const manyInterest = interestsList.map(interest => { return { name: interest } });
-        // console.log(interestsList);
-        const interests = await Interest.insertMany(interestsList);
-        res.status(200).json(interests);
+//     try{
+//         // const manyInterest = interestsList.map(interest => { return { name: interest } });
+//         // console.log(interestsList);
+//         const interests = await Interest.insertMany(interestsList);
+//         res.status(200).json(interests);
 
-    }catch(e){
-        res.status(500).json({ message: e });
-    }
-});
+//     }catch(e){
+//         res.status(500).json({ message: e });
+//     }
+// });
 
 
 module.exports = router;
