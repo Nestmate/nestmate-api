@@ -19,8 +19,12 @@ io.on('connection', (socket) => {
   socket.on("message", function (data) {
     io.emit("message", data);
   });
-  socket.on('join', ({chatId}) => {
-    console.log('joined room', chatId);
+  socket.on('join', ({userId}) => {
+    console.log('joined room', userId);
+    socket.join(userId);
+  });
+  socket.on('join_chat', ({chatId}) => {
+    console.log('joined chat room', chatId);
     socket.join(chatId);
   });
   socket.on('notification', (data) => {

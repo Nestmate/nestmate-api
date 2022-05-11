@@ -13,7 +13,15 @@ module.exports = (io) => {
             const authUser = await isAuthUser(req);
             if(!authUser) return res.status(401).json({ msg: "Unauthorized" });
             console.log('authUser _id => ', authUser?._id);
-            const chats = await Chat.find({ users: authUser._id }).populate('lastMessage users');
+
+            const chats = await Chat.find({ users: authUser._id },{ messages: { $slice: -10 }}).populate({
+                path : 'messages',
+                populate : {
+                    path : 'user',
+                    'select' : '_id firstName lastName profilePicture'
+                }
+            }).populate('users lastMessage');
+
             res.status(200).json({ chats });
 
         } catch (err) {
@@ -28,7 +36,7 @@ module.exports = (io) => {
         
         try {
             const { chatId } = req.params;
-            const chat = await Chat.findOne({_id:chatId}).populate({
+            const chat = await Chat.findOne({_id:chatId},{ messages: { $slice: -10 }}).populate({
                 path : 'messages',
                 populate : {
                     path : 'user',
@@ -48,14 +56,29 @@ module.exports = (io) => {
 
     //CREATE NEW CHAT
     router.post('/', async (req, res) => {
+
         try {
             
-            const { users, messages } = req.body;
-            const chat = await Chat.create({ users, messages });
+            const { users, message } = req.body;
+            const authUser = await isAuthUser(req);
+
+            if(!authUser) return res.status(401).json({ msg: "Unauthorized" });
+
+            let chat = await Chat.findOne({ users: { $all: users } });
+
+            console.log('Chat exists',{ chat });
+            let newMessage;
+            
+            if(!chat) chat = await Chat.create({ users });
+
+            newMessage = await Message.create({ message, chat: chat._id, user:authUser._id });
+
+            chat = await Chat.findByIdAndUpdate({ _id: chat._id }, { lastMessage: newMessage._id , $push: { messages: newMessage._id } }, { new: true });
+            
             res.status(200).json(chat);
 
         } catch (err) {
-
+            console.log(err);
             res.status(500).json({ message: err });
         }
 
@@ -71,10 +94,15 @@ module.exports = (io) => {
             const { message, user } = req.body;
             const newMessage = await Message.create({ message, chat, user });
            
-            await Chat.findByIdAndUpdate({ _id:chat }, { lastMessage: newMessage._id , $push: { messages: newMessage._id } }, { new: true });
-
+            const currChat = await Chat.findByIdAndUpdate({ _id:chat }, { lastMessage: newMessage._id , $push: { messages: newMessage._id } }, { new: true }).populate('users');
+            console.log( currChat );
             await newMessage.populate('user');
-            io.to(chat).emit('message', newMessage);
+
+            
+            
+            io.to( chat ).emit('message', { chatId:chat, message: newMessage });
+            
+            currChat.users.forEach(({ _id }) => io.to( _id.toString() ).emit('update_chat', { chat:currChat }));
 
             res.status(200).json({ newMessage });
 

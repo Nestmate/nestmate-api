@@ -90,41 +90,5 @@ router.post('/', async (req, res) => {
     }
 });
 
-// name: {
-//     type: String,
-//     required: true
-// },
-// state: {
-//     type: String,
-//     required: true
-// },
-// city: {
-//     type: String,
-//     required: true
-// },
-// images: [String],
-// description: String,
-// location: {
-//     type: {
-//         type: String,
-//         enum: ['Point'],
-//         required: true
-//     },
-//     coordinates: {
-//         type: [Number],
-//         required: true
-//     }
-// },
-// weather: {
-//     temperature: Number,
-//     humidity: Number,
-//     wind: Number,
-//     type: {
-//         type: String,
-//         enum: ['Clear', 'Clouds', 'Rain', 'Snow', 'Thunderstorm', 'Drizzle', 'Mist', 'Haze', 'Dust', 'Fog', 'Smoke', 'Sand', 'Ash', 'Squall', 'Tornado', 'Tornado']
-//     }
-// },
-// avgRent: Number
-
 
 module.exports = router;

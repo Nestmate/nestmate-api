@@ -11,7 +11,12 @@ router.get("/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const mates = await User.findOne({ _id:userId },'connections').populate('connections interests',{ password: 0 });
+    const mates = await User.findOne({ _id:userId },'connections').populate({
+        path : 'connections',
+        populate : {
+            path : 'interests'
+        }
+    });
 
     res.status(200).json(mates);
 
@@ -41,15 +46,19 @@ router.post("/:userId", async (req, res) => {
             return interests.filter(interest => userInterests.includes(interest));
         });
 
-        console.log(matches);
-
         const mappedMatches = matches.map(match => match._id);
 
-        const {connections} = await User.findOneAndUpdate({_id},{ connections: mappedMatches }, {upsert: true}).populate('connections',{ password: 0 });
+        const { connections } = await User.findOneAndUpdate({_id},{ connections: mappedMatches }, {upsert: true}).populate({
+            path : 'connections',
+            populate : {
+                path : 'interests'
+            }
+        });
 
         res.status(200).json(connections);
 
     } catch (err) {
+
         console.error(err);
         res.status(500).json({ message: err.message });
     }
