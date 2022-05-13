@@ -4,8 +4,6 @@
 
 const router = require("express").Router();
 const User = require("../models/User.model");
-const Mate = require("../models/Mate.model");
-const Favourite = require("../models/Favourite.model");
 
 router.get("/:userId", async (req, res) => {
   try {

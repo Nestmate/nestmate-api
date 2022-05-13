@@ -6,8 +6,7 @@ router.get("/:username" , async (req, res) => {
   try {
 
     let authUser = await isAuthUser(req);
-    console.log('authUser _id => ', authUser?._id);
-
+    
     const { username } = req.params;
     
     const user = await User.findOne({ username },{ password: 0 }).populate('interests');
@@ -48,7 +47,7 @@ router.post("/location/:lng/:lat/:distance",  async (req, res) => {
               }
         },
         _id: { $ne: user?._id }
-    },{ password: 0 });
+    },{ password: 0 }).populate('interests');
 
     res.status(200).json(users);
 

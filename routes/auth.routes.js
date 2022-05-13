@@ -21,8 +21,10 @@ router.post('/signup', async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hash = await bcrypt.hash(password, salt);
         const newUser = await User.create({ username, email, password: hash });
+
         delete newUser.password;
-        const authToken = jwt.sign({ user }, process.env.TOKEN_SECRET, { algorithm: 'HS256',expiresIn: '30d' });
+
+        const authToken = await jwt.sign({ user:newUser }, process.env.TOKEN_SECRET, { algorithm: 'HS256',expiresIn: '2h' });
 
         res.status(200).json({authToken});
 
@@ -48,7 +50,7 @@ router.post('/signin', async (req, res) => {
 
         delete user.password;
         
-        const authToken = jwt.sign({ user }, process.env.TOKEN_SECRET, { algorithm: 'HS256',expiresIn: '30d' });
+        const authToken = await jwt.sign({ user }, process.env.TOKEN_SECRET, { algorithm: 'HS256',expiresIn: '30d' });
 
         res.status(200).json({authToken});
 

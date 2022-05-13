@@ -2,6 +2,7 @@ module.exports = ( io ) => {
 
     const router = require("express").Router();
     const Connection = require("../models/Connection.model");
+    const Notification = require("../models/Notification.model");
     const User = require("../models/User.model");
     const isAuthUser = require("../helpers/isAuthUser");
     const { ObjectId } = require('mongodb');
@@ -55,10 +56,17 @@ module.exports = ( io ) => {
                 if(isConnected) {
 
                     const connection = await Connection.create({ users: [authUser._id, mateId] });
-                    console.log(connection);
-                    connection.users.forEach(({ _id }) => {
-                        console.log(_id.toString());
-                        io.to( _id.toString() ).emit('notification', { type: 'connection', notification:{ title: 'New Connection 🎉', message:'Someone made a connection with you!'}});
+
+                    connection.users.forEach( async ({ _id }) => {
+
+                        const notification = await Notification.create({
+                            type: "connection",
+                            user: _id.toString(),
+                            title: "You've got a new connection!",
+                            message: 'Quick check out your new connection',
+                            link: `/connections/${connection._id}`});
+
+                        io.to( _id.toString() ).emit('notification', { notification });
                     });
                 }
                     
