@@ -9,14 +9,14 @@ router.get("/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const mates = await User.findOne({ _id:userId },'connections').populate({
+    const { connections } = await User.findOne({ _id:userId },'connections').populate({
         path : 'connections',
         populate : {
             path : 'interests'
         }
     });
 
-    res.status(200).json(mates);
+    res.status(200).json( connections );
 
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -44,16 +44,18 @@ router.post("/:userId", async (req, res) => {
             return interests.filter(interest => userInterests.includes(interest));
         });
 
-        const mappedMatches = matches.map(match => match._id);
+        const mappedMatches = matches.map( match => match._id );
 
-        const { connections } = await User.findOneAndUpdate({_id},{ connections: mappedMatches }, {upsert: true}).populate({
+        const { connections } = await User.findOneAndUpdate({ _id },{ connections: mappedMatches }, { new: true }).populate({
             path : 'connections',
             populate : {
                 path : 'interests'
             }
         });
 
-        res.status(200).json(connections);
+        console.log(connections);
+
+        res.status(200).json( connections );
 
     } catch (err) {
 

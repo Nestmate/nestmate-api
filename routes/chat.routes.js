@@ -98,8 +98,6 @@ module.exports = (io) => {
             console.log( currChat );
             await newMessage.populate('user');
 
-            
-            
             io.to( chat ).emit('message', { chatId:chat, message: newMessage });
             
             currChat.users.forEach(({ _id }) => io.to( _id.toString() ).emit('update_chat', { chat:currChat }));

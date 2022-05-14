@@ -64,7 +64,7 @@ module.exports = ( io ) => {
                             user: _id.toString(),
                             title: "You've got a new connection!",
                             message: 'Quick check out your new connection',
-                            link: `/connections/${connection._id}`});
+                            link: `/connection/${connection._id}`});
 
                         io.to( _id.toString() ).emit('notification', { notification });
                     });
